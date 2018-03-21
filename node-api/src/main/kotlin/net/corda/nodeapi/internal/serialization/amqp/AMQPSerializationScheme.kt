@@ -83,7 +83,7 @@ abstract class AbstractAMQPSerializationScheme(val cordappLoader: List<Cordapp>)
     open protected val publicKeySerializer: CustomSerializer.Implements<PublicKey>
             = net.corda.nodeapi.internal.serialization.amqp.custom.PublicKeySerializer
 
-    private fun getSerializerFactory(context: SerializationContext): SerializerFactory {
+    protected fun getSerializerFactory(context: SerializationContext): SerializerFactory {
         return serializerFactoriesForContexts.computeIfAbsent(Pair(context.whitelist, context.deserializationClassLoader)) {
             when (context.useCase) {
                 SerializationContext.UseCase.Checkpoint ->
