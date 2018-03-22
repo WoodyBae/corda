@@ -3,6 +3,7 @@
 package net.corda.nodeapi.internal.serialization.amqp
 
 import net.corda.core.cordapp.Cordapp
+import net.corda.core.internal.uncheckedCast
 import net.corda.core.serialization.*
 import net.corda.nodeapi.internal.serialization.CordaSerializationMagic
 import net.corda.core.utilities.ByteSequence
@@ -34,7 +35,7 @@ abstract class AbstractAMQPSerializationScheme(val cordappLoader: List<Cordapp>)
         }
     }
 
-    private fun registerCustomSerializers(factory: SerializerFactory) {
+    private fun registerCustomSerializers(context: SerializationContext, factory: SerializerFactory) {
         with(factory) {
             register(publicKeySerializer)
             register(net.corda.nodeapi.internal.serialization.amqp.custom.PrivateKeySerializer)
@@ -74,13 +75,19 @@ abstract class AbstractAMQPSerializationScheme(val cordappLoader: List<Cordapp>)
                 factory.registerExternal(CorDappCustomSerializer(schema, factory))
             }
         }
+
+        context.properties[ContextPropertyKeys.SERIALIZERS]?.apply {
+            uncheckedCast<Any, List<CustomSerializer<out Any>>>(this).map {
+                factory.register(it)
+            }
+        }
     }
 
     private val serializerFactoriesForContexts = ConcurrentHashMap<Pair<ClassWhitelist, ClassLoader>, SerializerFactory>()
 
     protected abstract fun rpcClientSerializerFactory(context: SerializationContext): SerializerFactory
     protected abstract fun rpcServerSerializerFactory(context: SerializationContext): SerializerFactory
-    open protected val publicKeySerializer: CustomSerializer.Implements<PublicKey>
+    protected open val publicKeySerializer: CustomSerializer.Implements<PublicKey>
             = net.corda.nodeapi.internal.serialization.amqp.custom.PublicKeySerializer
 
     protected fun getSerializerFactory(context: SerializationContext): SerializerFactory {
@@ -94,7 +101,7 @@ abstract class AbstractAMQPSerializationScheme(val cordappLoader: List<Cordapp>)
                     rpcServerSerializerFactory(context)
                 else -> SerializerFactory(context.whitelist, context.deserializationClassLoader)
             }
-        }.also { registerCustomSerializers(it) }
+        }.also { registerCustomSerializers(context, it) }
     }
 
     override fun <T : Any> deserialize(byteSequence: ByteSequence, clazz: Class<T>, context: SerializationContext): T {

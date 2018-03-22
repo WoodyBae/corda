@@ -98,7 +98,17 @@ abstract class SerializationFactory {
         val currentFactory: SerializationFactory? get() = _currentFactory.get()
     }
 }
+
 typealias SerializationMagic = ByteSequence
+
+/**
+ *
+ */
+enum class ContextPropertyKeys {
+    // Context specific serializers
+    SERIALIZERS
+}
+
 /**
  * Parameters to serialization and deserialization.
  */
