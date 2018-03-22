@@ -9,7 +9,7 @@ from the previous milestone release.
 
 * Fix CORDA-1258. Custom serializers were spuriously registered every time a serialization factory was fetched from the cache rather than
   only once when it was created. Whilst registering serializers that already exist is essentially a no-op, it's a performance overhead for
-  a very frequent operation.
+  a very frequent operation that hits a synchronisation point (and is thus flagged as contended by our perfomance suite)
 
 * Node can be shut down abruptly by ``shutdown`` function in `CordaRPCOps` or gracefully (draining flows first) through ``gracefulShutdown`` command from shell.
 
